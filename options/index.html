@@ -30,57 +30,29 @@
               Intl.NumberFormat("es-CO").format(product.price)}}({{product.quantity}})</span
             >
           </div>
+          <p>Total: $ {{new Intl.NumberFormat("es-CO").format(total)}}</p>
         </div>
       </header>
 
       <main>
-        <section class="product">
-          <div class="product__thumbnails">
-            <div
-              v-for="(image,index) in product.images"
-              :key="image.thumbnail"
-              class="thumb"
-              :class="{active:activeImage === index}"
-              :style="{backgroundImage: ' url('+product.images[index].thumbnail+')'}"
-              @mouseover="activeImage = index"
-            ></div>
-          </div>
-          <div class="product__image">
-            <img :src="product.images[activeImage].image" :alt="product.name" />
-          </div>
-        </section>
-
-        <section class="description">
-          <h4>
-            {{product.name.toUpperCase()}} {{product.stock === 0 ? "😭": "😎"}}
-          </h4>
-          <span class="badge new" v-if="product.new">Nuevo</span>
-          <span class="badge offer" v-if="product.offer">Oferta</span>
-          <p class="description__status" v-if="product.stock === 3">
-            Quedan Pocas Unidades
-          </p>
-          <p class="description__status" v-else-if="product.stock === 2">
-            El producto esta por terminarse
-          </p>
-          <p class="description__status" v-else-if="product.stock === 1">
-            Ultima Unidad Disponible
-          </p>
-          <p class="description__price">
-            $ {{new Intl.NumberFormat("es-CO").format(product.price)}}
-          </p>
-          <p class="description__content">{{product.content}}</p>
-          <div class="discount">
-            <span>Codigo de Descuent:</span>
-            <input
-              type="text"
-              placeholder="Ingresa tu codigo"
-              @keyup.enter="applyDiscount($event)"
-            />
-          </div>
-          <button :disabled="product.stock === 0" @click="addToCart()">
-            Agregar al carrito
-          </button>
-        </section>
+        <product
+          v-for="product in products"
+          :key="product.name"
+          :product="product"
+          @sendtocart="addToCart($event)"
+        ></product>
+        <product
+          v-for="product in products"
+          :key="product.name"
+          :product="product"
+          @sendtocart="addToCart($event)"
+        ></product>
+        <product
+          v-for="product in products"
+          :key="product.name"
+          :product="product"
+          @sendtocart="addToCart($event)"
+        ></product>
       </main>
     </div>
 
@@ -91,65 +63,58 @@
       const app = createApp({
         data() {
           return {
-            product: {
-              name: "Camara",
-              price: 450000,
-              stock: 10,
-              content: `Lorem ipsum dolor sit amet consectetur adipisicing elit. Deserunt atque dolorum corporis, reiciendis eaque temporibus quod magnam amet ea natus delectus? Aut placeat ipsam minus labore voluptas. Porro, vel aliquid!`,
-              images: [
-                {
-                  image: "./images/camara.jpg",
-                  thumbnail: "./images/camara-thumb.jpg",
-                },
-                {
-                  image: "./images/camara-2.jpg",
-                  thumbnail: "./images/camara-2-thumb.jpg",
-                },
-              ],
-              new: false,
-              offer: true,
-              quantity: 1,
-            },
+            products: [],
             cartOpen: true,
-            activeImage: 1,
+            //total: 0,
             cart: [],
-            discountCodes: ["ANDRES2021", "MAPAZ2021"],
           };
         },
         methods: {
-          applyDiscount(event) {
-            const discountCodeIndex = this.discountCodes.indexOf(
-              event.target.value
-            );
-            if (discountCodeIndex >= 0) {
-              this.product.price *= 50 / 100;
-              this.discountCodes.splice(discountCodeIndex, 1);
-            }
-          },
-          addToCart() {
+          addToCart(product) {
             const prodIndex = this.cart.findIndex(
-              (prod) => prod.name === this.product.name
+              (prod) => prod.name === product.name
             );
             if (prodIndex >= 0) {
               this.cart[prodIndex].quantity += 1;
             } else {
-              this.cart.push(this.product);
+              this.cart.push(product);
             }
-            this.product.stock -= 1;
+            product.stock -= 1;
           },
         },
+        watch: {
+          /*cart: {
+            handler(cart) {
+              this.total = cart.reduce((prev, curr) => {
+                const prevPrice = prev.price || prev;
+                const prevQuantity = prev.quantity || 1;
+                return prevPrice * prevQuantity + curr.price * curr.quantity;
+              }, 0);
+            },
+            deep: true,
+          },*/
+        },
+        computed: {
+          total() {
+            return this.cart.reduce((prev, curr) => {
+              const prevPrice = prev.price || prev;
+              const prevQuantity = prev.quantity || 1;
+              return prevPrice * prevQuantity + curr.price * curr.quantity;
+            }, 0);
+          },
+        },
+        created() {
+          fetch("https://my-json-server.typicode.com/iosamuel/demo/products")
+            .then(res => res.json())
+            .then(data => {
+              this.products = data;
+            });
+        },
       });
-      app.mount("#app");
     </script>
-    <script type="text/javascript">
-      (function () {
-        window["__CF$cv$params"] = {
-          r: "625caa95dad4e5b3",
-          m:
-            "c2dbf9c519520f625c44c83297de1c47cf03d8d3-1614038423-1800-ARGaWSztWDuYTjMZTl8m9VE8QlEsyMwzn2NIpW9Q1ryKGbnb3At/KNaIRA71yXpWUK5gYo6Lmmq60KJnJCUn/x5BVSV5HIexgZDvq2MTxfnWd9HDDUbEwsk43aKKPJ7TX/UG/D91HbWBXE+m5xNYl0VvYmINP8O5rtHiWg0RFXjnhLleokTJnMYM/8csiIhoXwX6MvPDslUxaliiHcIpqK0=",
-          s: [0x32542a7c11, 0x73bb2015c0],
-        };
-      })();
+    <script type="text/javascript" src="./product.js"></script>
+    <script>
+      app.mount("#app");
     </script>
   </body>
 </html>
